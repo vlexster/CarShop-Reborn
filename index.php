@@ -126,8 +126,14 @@ session_start();
         <div id="left">
             <a href="about.html" target="iframe">About us</a> |
             <a href="contacts.html" target="iframe">Contacts</a> |
+            <a href="inventory.php" target="iframe">Inventory</a> |
             <a href="schedule.php" target="iframe">Schedule</a>
-            <?php if(isset($_SESSION['uname'])) echo " | <a href=\"my_veh.php\" target=\"iframe\">My Vehicles</a> | <a href=\"queue.php\" target=\"iframe\">Jobs Queue</a>"; ?>
+            <?php if(isset($_SESSION['uname'])) echo " | <a href=\"my_veh.php\" target=\"iframe\">My Vehicles</a> |
+ <a href=\"queue.php\" target=\"iframe\">Jobs Queue</a> |
+ <a href=\"bazaar.php\" target=\"iframe\">Bazaar</a>";
+$my_requests = @mysqli_fetch_all(mysqli_query($connection, "SELECT * FROM comments WHERE request = 1 AND job_id IN (SELECT id FROM cars WHERE owner_id = (SELECT id FROM users WHERE uname='".$_SESSION['uname']."'))"), MYSQLI_ASSOC);
+$requests = @mysqli_fetch_all(mysqli_query($connection, "SELECT * FROM comments WHERE request = 1 AND author_id = (SELECT id FROM users WHERE uname='".$_SESSION['uname']."')"), MYSQLI_ASSOC);
+if(sizeof($requests)!=0 || sizeof($my_requests)!=0) echo " | <a href=\"view_req.php\" target=\"iframe\">View requests</a>"; ?>
         </div>
         <div id="right"><?php if (!isset($_SESSION['uname'])) {
                 echo "<a href=\"#\" class=\"reg\">Register</a> | <a href=\"#\" class=\"id\">Log in</a>";

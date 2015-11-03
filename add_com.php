@@ -11,7 +11,7 @@ if (isset($_SESSION['uname']) && isset($_POST['job_id']) && isset($_POST['text']
     $author = mysqli_fetch_assoc(mysqli_query($connection, "SELECT id FROM users WHERE uname='".$_SESSION['uname']."'"))['id'];
     $job_id = mysql_real_escape_string($_POST['job_id']);
     $text = mysql_real_escape_string($_POST['text']);
-    mysqli_query($connection, "INSERT INTO comments(author_id, job_id, comment, timestamp) VALUES ('".$author."', '".$job_id."', '".$text."', '".time()."')");
+    mysqli_query($connection, "INSERT INTO comments(author_id, request, job_id, comment, timestamp) VALUES ('".$author."', 0, '".$job_id."', '".$text."', '".time()."')");
 }
 header("Location: queue.php");
 ?>

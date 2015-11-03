@@ -12,7 +12,10 @@ if (isset($_SESSION['uname']) && isset($_POST['car_id']) && isset($_POST['desc']
     $desc = mysql_real_escape_string($_POST['desc']);
     $mech = mysql_real_escape_string($_POST['for_mech']);
     $date = strtotime(mysql_real_escape_string($_POST['date']));
-    mysqli_query($connection, "INSERT INTO jobs(car_id, mechanic_id, description, status, timestamp) VALUES (".$car_id.", " . $mech . " , '".$desc."', 99, '".$date."')");
+    $part = mysql_real_escape_string($_POST['part']);
+    $query = "INSERT INTO jobs(car_id, mechanic_id, description, status, timestamp, part) VALUES (".$car_id.", " . $mech . " , '".$desc."', 99, '".$date."', $part)";
+    //var_dump($query);
+    mysqli_query($connection, $query);
 //    echo "INSERT INTO jobs(`car_id`, `mechanic_id`, `description`, `timestamp`) VALUES (".$car_id.", " . $mech . " , '".$desc."', '".time()."')";
 }
 header("Location: queue.php");

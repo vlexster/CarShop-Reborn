@@ -10,6 +10,7 @@
 require_once 'db_connection.php';
 session_start();
 $job_list = @mysqli_fetch_all(mysqli_query($connection, "SELECT * FROM jobs WHERE car_id IN (SELECT id FROM cars WHERE owner_id = (SELECT id FROM users WHERE uname='".$_SESSION['uname']."'))"), MYSQLI_ASSOC);
+$parts = @mysqli_fetch_all(mysqli_query($connection, "SELECT * FROM parts WHERE 1"), MYSQLI_ASSOC);
 $mech_job_list = @mysqli_fetch_all(mysqli_query($connection, "SELECT * FROM jobs WHERE mechanic_id IN (SELECT id FROM users WHERE uname='".$_SESSION['uname']."') AND status !=99"), MYSQLI_ASSOC);
 $mech_job_unassigned = @mysqli_fetch_all(mysqli_query($connection, "SELECT * FROM jobs WHERE status = 99 AND mechanic_id = (SELECT id FROM users WHERE uname='".$_SESSION['uname']."')"), MYSQLI_ASSOC);
 //var_dump($job_list);
@@ -74,7 +75,38 @@ if ($customer == "1"){
             if (make !="" && model != "" && year != "") document.forms["add_car"].submit();
             else window.alert("Missing required information!");
         }
+        var parts = new Array();
+        <?php
+        foreach($parts as $part){
+        echo "parts.push(['".$part['make']."', '".$part['model']."', '".$part['vendor']."', '".$part['origin']."', '".$part['type']."', '".$part['price']."', '".$part['avail']."', '".$part['id']."' ]);\n";
+        }
+        ?>
+//        console.debug(parts);
+        function filter(){
 
+            var e = document.getElementById('car_id');
+            var tmp = e.options[e.selectedIndex].text;
+            var car = tmp.split(" ");
+            var sel = document.getElementById('parts_id');
+            sel.innerHTML = null;
+            var option = document.createElement("option");
+            option.text = 'Other';
+            option.value = 'other';
+            sel.add(option);
+//            console.debug(car);
+            for(var i=0; i<parts.length; i++){
+                if (parts[i][0]==car[1] || parts[i][0]=='all'){
+                    if(parts[i][1]==car[2] || parts[i][1]=='all'){
+//                    if(car[1].indexOf(parts[i][1])!=-1 || parts[i][1]=='all'){
+                        var opt = document.createElement("option");
+                        opt.text = parts[i][4]+ ' by '+ parts[i][2]+' ('+ parts[i][3]+') - '+parts[i][5]+' (in stock: '+parts[i][6]+' )';
+                        opt.value = parts[i][7];
+                        sel.add(opt);
+                    }
+                }
+            }
+
+        }
     </script>
 </head>
 <body >
@@ -91,7 +123,7 @@ if ($customer == "1"){
                 $mechanic = mysqli_fetch_assoc(mysqli_query($connection, "SELECT * FROM users WHERE id ='".$job['mechanic_id']."'"));
                 if ($job['status'] == "1") $status = "Complete"; else if ($job['status']=="0") $status = "In progress"; else $status="Pending";
                 $comments = @mysqli_fetch_all(mysqli_query($connection, "SELECT * FROM comments WHERE job_id = '".$job['id']."' ORDER BY id"), MYSQLI_ASSOC);
-                echo "<tr><td>(".$car['year'].") ".$car['made']." ".$car['model']."</td><td>".$car['cat']."</td><td>".$mechanic['fname']." ".$mechanic['lname']."</td><td>".$mechanic['address']."</td><td>".$job['description']."</td><td>".date("D M jS @H:i", $job['timestamp'])."</td><td>".$job['price']."lv.</td>";
+                echo "<tr><td>(".$car['year'].") ".$car['made']." ".$car['model']."</td><td>".$car['cat']."</td><td>".$mechanic['fname']." ".$mechanic['lname']."</td><td>".$mechanic['city'].", ".$mechanic['address']."</td><td>".$job['description']."</td><td>".date("D M jS @H:i", $job['timestamp'])."</td><td>".$job['price']."lv.</td>";
                 if($status == "Complete") echo "<td class=\"job_compl\">".$status."</td>";
                 if($status == "In progress") echo "<td class=\"job_prog\">".$status."</td>";
                 if($status == "Pending") echo "<td class=\"job_pend\">".$status."</td>";
@@ -112,35 +144,38 @@ if ($customer == "1"){
             echo "<button type='button' class='add_btn'>Add a new job</button>\n<button type='button' class='cls_btn' style='display: none;'>Close</button>\n";
             echo "<div class='add_job' style='display:none'";
             echo ">\n<form target=\"_self\" action=\"add_job.php\" id=\"add_job\" method=\"POST\">\n";
-            echo "<label for=\"vehicle\">For Vehicle</label><select name=\"car_id\" id=\"car_id\">\n";
-                $cars = mysqli_fetch_all(mysqli_query($connection, "SELECT * FROM cars WHERE owner_id = (SELECT id FROM users WHERE uname = '". $_SESSION['uname'] ."')" ));
-                foreach ($cars as $vehicle){
-                    echo "<option value='".$vehicle[0]."'>(".$vehicle[4].") ". $vehicle[2]. " " . $vehicle[3]."</option>\n";
-                }
+            echo "<label for=\"vehicle\">For Vehicle</label><select name=\"car_id\" id=\"car_id\" onchange=\"filter();\">\n";
+            $cars = mysqli_fetch_all(mysqli_query($connection, "SELECT * FROM cars WHERE owner_id = (SELECT id FROM users WHERE uname = '". $_SESSION['uname'] ."')" ));
+            echo "<option value=''></option>\n";
+            foreach ($cars as $vehicle){
+                echo "<option value='".$vehicle[0]."'>(".$vehicle[4].") ". $vehicle[2]. " " . $vehicle[3]."</option>\n";
+            }
             echo "</select> <br/>\n";
             echo "<label for=\"for_mech\">Mechanic</label><select name=\"for_mech\" id=\"for_mech\">\n";
-                $mechs = @mysqli_fetch_all(mysqli_query($connection, "SELECT * FROM users WHERE type = 0" ), MYSQLI_ASSOC);
-                foreach ($mechs as $mech){
-                    echo "<option value='".$mech['id']."'>".$mech['fname']." ". $mech['lname']. " - " . $mech['phone']." @".$mech['address']."</option>\n";
-                }
+            $mechs = @mysqli_fetch_all(mysqli_query($connection, "SELECT * FROM users WHERE type = 0" ), MYSQLI_ASSOC);
+            foreach ($mechs as $mech){
+                echo "<option value='".$mech['id']."'>".$mech['fname']." ". $mech['lname']. " - " . $mech['phone']." @".$mech['city'].", ".$mech['address']."</option>\n";
+            }
             echo "</select><br>\n";
-            echo "<label for=\"desc\">Description</label><textarea name=\"desc\" id=\"desc\"></textarea> <br/>\n";
+            echo "<label for=\"part\">Part to be replaced</label><select name=\"part\" id=\"parts_id\"><option value='other'>Other</option>\n</select><br>\n";
+            echo "<label for=\"desc\">Description</label><textarea name=\"desc\" id=\"desc\"></textarea><br/>\n";
             echo "<label for=\"time\">Time</label><input type=\"date\" name=\"date\" min=\"". date("Y-m-d",strtotime('Tomorrow'))."\" max=\"". date("Y-m-d",strtotime('+1 week next Friday'))."\" />\n";
             echo "<br/><button type=\"submit\">Add</button>\n</form>\n</div>";
 
-    }
+        }
     } else{
 
         if (count($mech_job_unassigned)==0){
             echo "No pending to be accepted jobs for this mechanic at the moment!<br><br>";}
         else {
-            echo "<table class='my_jobs'><tr><th>Vehicle</th><th>Vehicle type</th><th>Owner</th><th>Description</th><th>Scheduled for</th><th>Price</th><th>Completed?</th><th class=\"comments\">Comments</th></tr>";
+            echo "<table class='my_jobs'><tr><th width=300>Vehicle</th><th>Vehicle type</th><th>Owner</th><th>Parts to be replaced</th><th>Description</th><th>Scheduled for</th><th>Price</th><th>Status</th><th class=\"comments\">Comments</th></tr>";
             foreach ($mech_job_unassigned as $job){
                 $car = mysqli_fetch_assoc(mysqli_query($connection, "SELECT * FROM cars WHERE id ='".$job['car_id']."'"));
                 $owner = mysqli_fetch_assoc(mysqli_query($connection, "SELECT * FROM users WHERE id = (SELECT owner_id FROM cars WHERE id ='".$job['car_id']."')"));
+                $part = mysqli_fetch_assoc(mysqli_query($connection, "SELECT * FROM parts WHERE id = ".$job['part']));
                 if ($job['status'] == "1") $status = "Complete"; else if ($job['status']=="0") $status = "In progress"; else $status="Pending";
                 $comments = @mysqli_fetch_all(mysqli_query($connection, "SELECT * FROM comments WHERE job_id = '".$job['id']."' ORDER BY id"), MYSQLI_ASSOC);
-                echo "<tr><td>(".$car['year'].") ".$car['made']." ".$car['model']."</td><td>".$car['cat']."</td><td>".$owner['fname']." ".$owner['lname']." (".$owner['phone'].")</td><td>".$job['description']."</td><form method=\"post\" target=\"_self\" action=\"set_inprog.php?id=".$job['id']."\"><td><input type=\"datetime-local\" name=\"new_time\" min=\"".date("Y-m-j", $job['timestamp'])."T09:00:00\" max=\"".date("Y-m-j", $job['timestamp'])."T17:30:00\" step=\"1800\" value=\"".date("Y-m-j", $job['timestamp'])."T".date("H:i:s", $job['timestamp'])."\"></td><td>".$job['price']."lv.<br><input type=\"text\" name=\"new_price\" size=\"4\"></td>";
+                echo "<tr><td>(".$car['year'].") ".$car['made']." ".$car['model']."</td><td>".$car['cat']."</td><td>".$owner['fname']." ".$owner['lname']." (".$owner['phone'].")</td><form method=\"post\" target=\"_self\" action=\"set_inprog.php?id=".$job['id']."\"><td>".$part['type']." by ".$part['vendor']." (".$part['origin'].") - ".$part['price']." lv. (in stock: ".$part['avail'].")</td><td>".$job['description']."<br><input type=\"text\" name=\"part_qty\" placeholder=\"Number of required parts\"></td><td><input type=\"datetime-local\" name=\"new_time\" min=\"".date("Y-m-j", $job['timestamp'])."T09:00:00\" max=\"".date("Y-m-j", $job['timestamp'])."T17:30:00\" step=\"1800\" value=\"".date("Y-m-j", $job['timestamp'])."T".date("H:i:s", $job['timestamp'])."\"></td><td>".$job['price']."lv.<br><input type=\"text\" name=\"new_price\" size=\"4\"></td>";
                 if($status == "Pending") echo "<td class=\"job_pend\">".$status."<br><button type=\"submit\">Begin Job</button></form></td>";
                 echo "<td><button type=\"button\" ";
                 echo "id=\"mtrigg".$job['id']."\">Show comments</button><br><div id=\"mcomm".$job['id']."\" style=\"display:none;\">";
@@ -158,13 +193,14 @@ if ($customer == "1"){
         if (count($mech_job_list)==0){
             echo "No jobs have been entered for this mechanic yet. If you want to add one - click on the button bellow.<br><br>";}
         else {
-            echo "<table class='my_jobs'><tr><th>Vehicle</th><th>Vehicle type</th><th>Owner</th><th>Description</th><th>Scheduled for</th><th>Price</th><th>Completed?</th><th class=\"comments\">Comments</th></tr>";
+            echo "<table class='my_jobs'><tr><th>Vehicle</th><th>Vehicle type</th><th>Owner</th><th>Parts to be replaced</th><th>Description</th><th>Scheduled for</th><th>Price</th><th>Completed?</th><th class=\"comments\">Comments</th></tr>";
             foreach ($mech_job_list as $job){
+                $part = mysqli_fetch_assoc(mysqli_query($connection, "SELECT * FROM parts WHERE id = ".$job['part']));
                 $car = mysqli_fetch_assoc(mysqli_query($connection, "SELECT * FROM cars WHERE id ='".$job['car_id']."'"));
                 $owner = mysqli_fetch_assoc(mysqli_query($connection, "SELECT * FROM users WHERE id = (SELECT owner_id FROM cars WHERE id ='".$job['car_id']."')"));
                 if ($job['status'] == "1") $status = "Complete"; else if ($job['status']=="0") $status = "In progress"; else $status="Pending";
                 $comments = @mysqli_fetch_all(mysqli_query($connection, "SELECT * FROM comments WHERE job_id = '".$job['id']."' ORDER BY id"), MYSQLI_ASSOC);
-                echo "<tr><td>(".$car['year'].") ".$car['made']." ".$car['model']."</td><td>".$car['cat']."</td><td>".$owner['fname']." ".$owner['lname']." (".$owner['phone'].")</td><td>".$job['description']."</td><td>".date("D M jS @H:i", $job['timestamp'])."</td><td>".$job['price']."lv.</td>";
+                echo "<tr><td>(".$car['year'].") ".$car['made']." ".$car['model']."</td><td>".$car['cat']."</td><td>".$owner['fname']." ".$owner['lname']." (".$owner['phone'].")</td><td>".$part['type']." by ".$part['vendor']." (".$part['origin'].") - ".$part['price']." lv. (in stock: ".$part['avail'].")</td><td>".$job['description']."</td><td>".$job['description']."</td><td>".date("D M jS @H:i", $job['timestamp'])."</td><td>".$job['price']."lv.</td>";
                 if($status == "Complete") echo "<td class=\"job_compl\">".$status."<br></td>";
                 if($status == "In progress") echo "<td class=\"job_prog\">".$status."<br><form method=\"post\" target=\"_self\" action=\"set_compl.php?id=".$job['id']."\"><button type=\"submit\">Mark complete</button></form></td>";
                 echo "<td><button type=\"button\" ";
