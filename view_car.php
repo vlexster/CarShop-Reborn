@@ -49,9 +49,9 @@ if (isset($_POST['make'])) echo $_POST['make']."<br>";
 <body><center>
     <?php
         if(isset($car_info['img1']) || isset($car_info['img2']) || isset($car_info['img3'])) echo "<div style=\"width:100%; height: 300px;\"><center>";
-        if(isset($car_info['img1'])) echo "<img src='".$car_info['img1']."' style='height:280px; margin:10px;'>";
-        if(isset($car_info['img2'])) echo "<img src='".$car_info['img2']."' style='height:280px; margin:10px;'>";
-        if(isset($car_info['img3'])) echo "<img src='".$car_info['img3']."' style='height:280px; margin:10px;'>";
+        if(isset($car_info['img1'])) echo "<img src='".$car_info['img1']."' style='max-height:280px; margin:10px; max-width:360px;'>";
+        if(isset($car_info['img2'])) echo "<img src='".$car_info['img2']."' style='max-height:280px; margin:10px; max-width:360px;'>";
+        if(isset($car_info['img3'])) echo "<img src='".$car_info['img3']."' style='max-height:280px; margin:10px; max-width:360px;'>";
     if(isset($car_info['img1']) || isset($car_info['img2']) || isset($car_info['img3'])) echo "</center></div>";
     $owner = @mysqli_fetch_assoc(mysqli_query($connection, "SELECT * FROM users WHERE id ='".$car_info['owner_id']."'"));
     echo "<div><strong>(".$car_info['year'].") ".$car_info['made']." ".$car_info['model']."</strong><br>
@@ -71,7 +71,7 @@ if (isset($_POST['make'])) echo $_POST['make']."<br>";
     else{
         echo "<h3>Service history:</h3><table class='my_cars'><tr><th>Date</th><th>Service description</th><th>Carried out by</th><th>Parts used</th></tr>";
         foreach ($job_list as $job) {
-            $part =  @mysqli_fetch_assoc(mysqli_query($connection, "SELECT * FROM parts WHERE id ='".$job['part_id']."'"));
+            $part =  @mysqli_fetch_assoc(mysqli_query($connection, "SELECT * FROM parts WHERE id ='".$job['part']."'"));
             $mechanic = mysqli_fetch_assoc(mysqli_query($connection, "SELECT * FROM users WHERE id ='".$job['mechanic_id']."'"));
             if ($job['status'] == "1") $status = "Complete"; else if ($job['status']=="0") $status = "In progress"; else $status="Pending";
             $comments = @mysqli_fetch_all(mysqli_query($connection, "SELECT * FROM comments WHERE job_id = '".$job['id']."' ORDER BY id"), MYSQLI_ASSOC);

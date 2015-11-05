@@ -54,6 +54,18 @@ if (isset($_POST['make'])) echo $_POST['make']."<br>";
         }
 
     </script>
+    <style>
+        .info {text-align: right;}
+        a:link { color: #000;}
+        a:active { color: #f00;}
+        a:visited { color: #00f;}
+        a:hover { color: #330;}
+        .my_cars td,th{
+            min-width: 100px;
+            width:300px;
+            vert-align: middle;
+            }
+    </style>
 </head>
 <body >
 
@@ -61,9 +73,10 @@ if (isset($_POST['make'])) echo $_POST['make']."<br>";
     if (count($car_list)==0){
         echo "No vehicles have been entered for this user yet. If you want to add one - click on the button bellow.<br><br>";}
     else {
-        echo "<table class='my_cars'><tr><th>Make</th><th>Model</th><th>Year of production</th><th>Vehicle type</th><th>Delete?</th></tr>";
+        echo "<table class='my_cars'><tr><th>Make</th><th>Model</th><th>Year of production</th><th>Vehicle type</th><th>For sale?</th><th>Delete?</th></tr>";
         foreach ($car_list as $car){
-            echo "<tr><td>".$car['made']."</td><td>".$car['model']."</td><td>".$car['year']."</td><td>".$car['cat']."</td><td align='center'><img src='images/deleteX.gif' onclick=\"del_car('".$car['made']."', '".$car['model']."', '".$car['year']."', '".$car['id']."', '".$car['cat']."')\"/></td></tr>";
+            if ($car['forsale']==0) $seller="I want to put this vehicle for sale"; else $seller="I don't want to sell this vehicle any more";
+            echo "<tr><td><a href=\"view_car.php?carid=".$car['id']."\">".$car['made']."</a></td><td><a href=\"view_car.php?carid=".$car['id']."\">".$car['model']."</a></td><td>".$car['year']."</td><td>".$car['cat']."</td><td><center><form action=\"seller.php?id=".$car['id']."\" target=\"_self\" method=\"post\"><input type=\"submit\" value=\"".$seller."\"></form></center></td><td align='center'><img src='images/deleteX.gif' onclick=\"del_car('".$car['made']."', '".$car['model']."', '".$car['year']."', '".$car['id']."', '".$car['cat']."')\"/></td></tr>";
         }
         echo "</table>";
     }
@@ -80,6 +93,14 @@ if (isset($_POST['make'])) echo $_POST['make']."<br>";
                 <option value="truck">Truck</option>
                 <option value="bus">Bus</option>
             </select> <br/>
+            <label for="forsale">Put for sale</label>
+            <select name="forsale" id="forsale">
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </select> <br/>
+            <label for="img1">Photo URL #1</label><input type="text" name="img1" id="img1"/> <br/>
+            <label for="img2">Photo URL #2</label><input type="text" name="img2" id="img2"/> <br/>
+            <label for="img3">Photo URL #3</label><input type="text" name="img3" id="img3"/> <br/>
             <input type="button" value="Add" onclick="add_car()"/>
         </form>
     </div>

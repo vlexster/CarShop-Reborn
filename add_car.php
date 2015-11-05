@@ -12,8 +12,12 @@ if (isset($_SESSION['uname']) && isset($_POST['make']) && isset($_POST['model'])
     $make = mysql_real_escape_string($_POST['make']);
     $model = mysql_real_escape_string($_POST['model']);
     $year = mysql_real_escape_string($_POST['year']);
+    $forsale = mysql_real_escape_string($_POST['forsale']);
     $cat = strtolower(mysql_real_escape_string($_POST['type']));
-    mysqli_query($connection, "INSERT INTO cars(owner_id, made, model, year, cat) VALUES ('".$owner."', '".$make."', '".$model."', '".$year."', '".$cat."')");
+    if (isset($_POST['img1'])) $img1=mysql_real_escape_string($_POST['img1']); else $img1 = null;
+    if (isset($_POST['img2'])) $img2=mysql_real_escape_string($_POST['img2']); else $img2 = null;
+    if (isset($_POST['img3'])) $img3=mysql_real_escape_string($_POST['img3']); else $img3 = null;
+    mysqli_query($connection, "INSERT INTO cars(owner_id, made, model, year, cat, forsale, img1, img2, img3) VALUES ('".$owner."', '".$make."', '".$model."', '".$year."', '".$cat."', ".$forsale.", '".$img1."',  '".$img2."',  '".$img3."')");
 }
 header("Location: my_veh.php");
 ?>
